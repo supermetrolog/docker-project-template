@@ -1,0 +1,82 @@
+version: '2'
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./projects:/var/www
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/logs:/var/log/nginx/
+    depends_on:
+      - php-7.4
+      - mysql-5.7
+    networks:
+      backend:
+
+  mysql-5.7:
+    image: mysql:5.7
+    container_name: mysql-5.7
+    restart: unless-stopped
+    volumes:
+      - ./mysql-5.7/data:/var/lib/mysql
+      - ./mysql-5.7/conf.d:/etc/mysql/conf.d
+      - ./mysql-5.7/logs:/var/log/mysql/
+      - ./mysql-5.7/dump:/dump
+    ports:
+      - "${MYSQL_5_7_PORT}:3306"
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: ${WORKSPACE_TIMEZONE}
+    networks:
+      - backend
+  php-7.4:
+    build:
+      context: php-workspace
+      dockerfile: Dockerfile
+      args:
+        DOCKER_PHP_VERSION: '7.4'
+        DOCKER_PHP_ENABLE_XDEBUG: ${DOCKER_PHP_ENABLE_XDEBUG}
+        TZ: ${WORKSPACE_TIMEZONE}
+    working_dir: /var/www
+    container_name: php-7.4
+    volumes:
+      - ./.ssh:/home/www-data/.ssh
+      - ./projects:/var/www
+      - ./php-ini/7.4/php.ini:/usr/local/etc/php/php.ini
+      - ./php-workers/7.4/supervisor.d:/etc/supervisor.d
+    ports:
+      - "${PHP_7_4_PORT}:9000"
+    depends_on:
+      - php-dependens
+    networks:
+      - backend
+  php-dependens:
+    build:
+      context: php-workspace
+      dockerfile: Dockerfile
+      args:
+        DOCKER_PHP_VERSION: '7.4'
+        DOCKER_PHP_ENABLE_XDEBUG: ${DOCKER_PHP_ENABLE_XDEBUG}
+        TZ: ${WORKSPACE_TIMEZONE}
+    working_dir: /var/www/
+    command: bash -c "cd api.ru && composer install --no-interaction && php yii migrate --interactive=0"
+    container_name: php-dependens
+    volumes:
+      - ./.ssh:/home/www-data/.ssh
+      - ./projects:/var/www
+      - ./php-ini/7.4/php.ini:/usr/local/etc/php/php.ini
+      - ./php-workers/7.4/supervisor.d:/etc/supervisor.d
+    ports:
+      - "${PHP_DEPENDENS_PORT}:9000"
+    networks:
+      - backend
+
+networks:
+  backend:
