@@ -1,4 +1,4 @@
-.env
+# .env
 /mongo/db/**
 !/mongo/db/.gitkeep
 /mongo/dump/**
@@ -15,7 +15,7 @@
 !/postgres/data/.gitkeep
 /postgres/dump/**
 !/postgres/dump/.gitkeep
-/.ssh/**
+# /.ssh/**
 !/.ssh/.gitkeep
 /redis/data/**
 !/redis/data/.gitkeep
@@ -23,8 +23,8 @@
 !/nginx/logs/.gitkeep
 
 # Файлы web-проектов
-/projects/**
-!/projects/.gitkeep
+# /projects/**
+# !/projects/.gitkeep
 
 
 # Другие файлы
